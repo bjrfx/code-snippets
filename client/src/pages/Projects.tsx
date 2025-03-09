@@ -108,6 +108,7 @@ export default function Projects() {
       await updateDoc(projectRef, {
         ...projectData,
         updatedAt: Date.now(),
+        // Ensure we don't overwrite the createdAt timestamp
       });
       
       return { id, ...projectData };
@@ -220,7 +221,7 @@ export default function Projects() {
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">
-                Created: {new Date(project.createdAt).toLocaleDateString()}
+                Created: {project.createdAt ? new Date(typeof project.createdAt === 'object' && project.createdAt.seconds ? project.createdAt.seconds * 1000 : project.createdAt).toLocaleDateString() : 'N/A'}
               </p>
             </CardContent>
             <CardFooter className="flex justify-end space-x-2">
