@@ -31,7 +31,11 @@ export default function Home() {
         ...doc.data()
       }));
     },
-    enabled: !!user
+    enabled: !!user,
+    // Ensure we refetch when the component mounts or when the tab changes
+    refetchOnMount: true,
+    // Reduce staleTime for this specific query to ensure more frequent updates
+    staleTime: 5000
   });
 
   const renderContent = () => {
@@ -98,26 +102,48 @@ export default function Home() {
             <TabsTrigger value="checklists">Checklists</TabsTrigger>
           </TabsList>
           <TabsContent value="snippets" className="mt-6">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold">Your Snippets</h2>
+              <CreateItemDialog
+                type="snippet"
+                trigger={
+                  <Button className="flex items-center gap-1">
+                    <Plus className="h-4 w-4" /> New Snippet
+                  </Button>
+                }
+              />
+            </div>
             {renderContent()}
           </TabsContent>
           <TabsContent value="notes" className="mt-6">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold">Your Notes</h2>
+              <CreateItemDialog
+                type="note"
+                trigger={
+                  <Button className="flex items-center gap-1">
+                    <Plus className="h-4 w-4" /> New Note
+                  </Button>
+                }
+              />
+            </div>
             {renderContent()}
           </TabsContent>
           <TabsContent value="checklists" className="mt-6">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold">Your Checklists</h2>
+              <CreateItemDialog
+                type="checklist"
+                trigger={
+                  <Button className="flex items-center gap-1">
+                    <Plus className="h-4 w-4" /> New Checklist
+                  </Button>
+                }
+              />
+            </div>
             {renderContent()}
           </TabsContent>
         </Tabs>
-        
-        <div className="fixed bottom-6 right-6 z-50">
-          <CreateItemDialog
-            type={activeTab === 'snippets' ? 'snippet' : activeTab === 'notes' ? 'note' : 'checklist'}
-            trigger={
-              <Button size="icon" className="h-14 w-14 rounded-full shadow-lg">
-                <Plus className="h-6 w-6" />
-              </Button>
-            }
-          />
-        </div>
       </div>
     </MainLayout>
   );

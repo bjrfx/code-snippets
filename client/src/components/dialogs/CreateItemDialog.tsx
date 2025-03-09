@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -24,14 +24,17 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/lib/auth';
 import { db } from '@/lib/firebase';
-import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { addDoc, collection, serverTimestamp, getDocs, query, where } from 'firebase/firestore';
 import { CodeEditor } from '../snippet/CodeEditor';
 import { TagInput } from '@/components/ui/tag-input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useQueryClient } from '@tanstack/react-query';
 
 const baseSchema = {
   title: z.string().min(1, 'Title is required'),
   description: z.string().optional(),
   tags: z.array(z.string()).default([]),
+  projectId: z.string().optional(),
 };
 
 const snippetSchema = z.object({
@@ -66,6 +69,37 @@ export function CreateItemDialog({ type, trigger, onCreated }: CreateItemDialogP
   const { user } = useAuth();
   const { toast } = useToast();
   const [checklistItems, setChecklistItems] = useState([{ text: '', checked: false }]);
+  const queryClient = useQueryClient();
+
+  const [projects, setProjects] = useState<{id: string, name: string}[]>([]);
+  const [isCreatingProject, setIsCreatingProject] = useState(false);
+  const [newProjectName, setNewProjectName] = useState('');
+
+  // Fetch projects for the current user
+  useEffect(() => {
+    const fetchProjects = async () => {
+      if (!user) return;
+      
+      try {
+        const q = query(
+          collection(db, 'projects'),
+          where('userId', '==', user.uid)
+        );
+        
+        const querySnapshot = await getDocs(q);
+        const projectsData = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          name: doc.data().name,
+        }));
+        
+        setProjects(projectsData);
+      } catch (error) {
+        console.error('Error fetching projects:', error);
+      }
+    };
+    
+    fetchProjects();
+  }, [user]);
 
   const form = useForm<any>({
     resolver: zodResolver(
@@ -79,8 +113,40 @@ export function CreateItemDialog({ type, trigger, onCreated }: CreateItemDialogP
       content: '',
       language: 'javascript',
       tags: [],
+      projectId: 'uncategorized',
     },
   });
+
+  const createNewProject = async () => {
+    if (!user || !newProjectName.trim()) return;
+    
+    try {
+      const now = Date.now();
+      const projectRef = await addDoc(collection(db, 'projects'), {
+        name: newProjectName.trim(),
+        userId: user.uid,
+        createdAt: now,
+        updatedAt: now
+      });
+      
+      const newProject = {
+        id: projectRef.id,
+        name: newProjectName.trim()
+      };
+      
+      setProjects([...projects, newProject]);
+      form.setValue('projectId', projectRef.id);
+      setNewProjectName('');
+      setIsCreatingProject(false);
+    } catch (error: any) {
+      console.error('Error creating project:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: error.message || 'Failed to create project. Please try again.'
+      });
+    }
+  };
 
   const onSubmit = async (data: any) => {
     try {
@@ -101,13 +167,37 @@ export function CreateItemDialog({ type, trigger, onCreated }: CreateItemDialogP
         JSON.stringify(checklistItems.filter(item => item.text.trim())) :
         data.content;
 
-      await addDoc(collection(db, collectionName), {
+      const docRef = await addDoc(collection(db, collectionName), {
         ...data,
         content,
         userId: user.uid,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       });
+
+      // Create a new item object with the data that was just saved
+      const newItem = {
+        id: docRef.id,
+        ...data,
+        content,
+        userId: user.uid,
+        createdAt: new Date().getTime(),
+        updatedAt: new Date().getTime(),
+      };
+
+      // Update the React Query cache to include the new item
+      queryClient.setQueryData(['items', user.uid, collectionName], (oldData: any[] | undefined) => {
+        return oldData ? [newItem, ...oldData] : [newItem];
+      });
+
+      // Also update the folder items cache
+      queryClient.setQueryData(['folder-items', user.uid, collectionName], (oldData: any[] | undefined) => {
+        return oldData ? [newItem, ...oldData] : [newItem];
+      });
+
+      // Invalidate queries to ensure consistency
+      queryClient.invalidateQueries({ queryKey: ['items'] });
+      queryClient.invalidateQueries({ queryKey: ['folder-items'] });
 
       toast({
         title: 'Success',
@@ -207,6 +297,71 @@ export function CreateItemDialog({ type, trigger, onCreated }: CreateItemDialogP
                         placeholder="Add tags (press Enter or comma to add)"
                       />
                     </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="projectId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Project</FormLabel>
+                    {isCreatingProject ? (
+                      <div className="flex gap-2">
+                        <FormControl>
+                          <Input
+                            value={newProjectName}
+                            onChange={(e) => setNewProjectName(e.target.value)}
+                            placeholder="Enter new project name"
+                          />
+                        </FormControl>
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          onClick={createNewProject}
+                          disabled={!newProjectName.trim()}
+                        >
+                          Create
+                        </Button>
+                        <Button 
+                          type="button" 
+                          variant="ghost" 
+                          onClick={() => setIsCreatingProject(false)}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="flex gap-2">
+                        <FormControl>
+                          <Select
+                            value={field.value}
+                            onValueChange={field.onChange}
+                          >
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Select a project or leave empty" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="uncategorized">Uncategorized</SelectItem>
+                              {projects.map((project) => (
+                                <SelectItem key={project.id} value={project.id}>
+                                  {project.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          onClick={() => setIsCreatingProject(true)}
+                        >
+                          New Project
+                        </Button>
+                      </div>
+                    )}
                     <FormMessage />
                   </FormItem>
                 )}

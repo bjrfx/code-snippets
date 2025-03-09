@@ -27,6 +27,7 @@ import { db } from '@/lib/firebase';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { CodeEditor } from '../snippet/CodeEditor';
 import { TagInput } from '@/components/ui/tag-input';
+import { useQueryClient } from '@tanstack/react-query';
 
 const baseSchema = {
   title: z.string().min(1, 'Title is required'),
@@ -67,6 +68,7 @@ export function EditItemDialog({ type, itemId, defaultValues, trigger, onEdited 
   const [open, setOpen] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [checklistItems, setChecklistItems] = useState(
     type === 'checklist' 
       ? JSON.parse(defaultValues.content || '[]')
@@ -109,6 +111,31 @@ export function EditItemDialog({ type, itemId, defaultValues, trigger, onEdited 
         content,
         updatedAt: serverTimestamp(),
       });
+
+      // Create an updated item object with the new data
+      const updatedItem = {
+        id: itemId,
+        ...data,
+        content,
+        userId: user.uid,
+        updatedAt: new Date().getTime(),
+      };
+
+      // Update the React Query cache to include the updated item
+      queryClient.setQueryData(['items', user.uid, collectionName], (oldData: any[] | undefined) => {
+        if (!oldData) return [updatedItem];
+        return oldData.map(item => item.id === itemId ? updatedItem : item);
+      });
+
+      // Also update the folder items cache
+      queryClient.setQueryData(['folder-items', user.uid, collectionName], (oldData: any[] | undefined) => {
+        if (!oldData) return [updatedItem];
+        return oldData.map(item => item.id === itemId ? updatedItem : item);
+      });
+
+      // Invalidate queries to ensure consistency
+      queryClient.invalidateQueries({ queryKey: ['items'] });
+      queryClient.invalidateQueries({ queryKey: ['folder-items'] });
 
       toast({
         title: 'Success',

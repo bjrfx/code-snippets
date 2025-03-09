@@ -11,6 +11,8 @@ import SnippetDetail from '@/pages/SnippetDetail';
 import NoteDetail from '@/pages/NoteDetail';
 import ChecklistDetail from '@/pages/ChecklistDetail';
 import TagDetail from '@/pages/TagDetail';
+import Projects from '@/pages/Projects';
+import Profile from '@/pages/Profile';
 
 function PrivateRoute({ component: Component }: { component: React.ComponentType }) {
   const { user, isLoading } = useAuth();
@@ -36,6 +38,8 @@ function Router() {
       <Route path="/auth" component={Auth} />
       <Route path="/" component={() => <PrivateRoute component={Home} />} />
       <Route path="/settings" component={() => <PrivateRoute component={Settings} />} />
+      <Route path="/projects" component={() => <PrivateRoute component={Projects} />} />
+      <Route path="/profile" component={() => <PrivateRoute component={Profile} />} />
       <Route path="/snippets/:id" component={() => <PrivateRoute component={SnippetDetail} />} />
       <Route path="/notes/:id" component={() => <PrivateRoute component={NoteDetail} />} />
       <Route path="/checklists/:id" component={() => <PrivateRoute component={ChecklistDetail} />} />

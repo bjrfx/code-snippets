@@ -1,0 +1,122 @@
+/* Card animations and enhanced styling */
+
+/* Hover effects for cards */
+.card-hover-effect {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card-hover-effect:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 20px -10px rgba(0, 0, 0, 0.1);
+}
+
+/* Card content fade-in animation */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in-content {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+/* Enhanced card styling */
+.enhanced-card {
+  border-radius: 0.75rem;
+  border-width: 1px;
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+/* Snippet card specific styling */
+.snippet-card {
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.05), transparent);
+}
+
+/* Note card specific styling - paper-like appearance */
+.note-card {
+  background-image: 
+    linear-gradient(to right, rgba(0, 0, 0, 0.02) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.02) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+/* Checklist card specific styling */
+.checklist-card {
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.05), transparent);
+}
+
+/* Tag styling enhancement */
+.enhanced-tag {
+  transition: all 0.2s ease;
+  transform-origin: center;
+}
+
+.enhanced-tag:hover {
+  transform: scale(1.05);
+}
+
+/* Card header with accent border */
+.card-header-accent {
+  border-bottom: 1px solid rgba(var(--accent-rgb), 0.2);
+}
+
+/* Card footer with subtle top border */
+.card-footer-border {
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+/* Dark mode adjustments */
+.dark .enhanced-card {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+}
+
+.dark .note-card {
+  background-image: 
+    linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+}
+
+/* Checkbox animation */
+@keyframes checkmarkAppear {
+  from { opacity: 0; transform: scale(0.5); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.checkbox-animation:checked {
+  animation: checkmarkAppear 0.2s ease-out forwards;
+}
+
+/* Code editor enhancements */
+.enhanced-code-editor {
+  border-radius: 0.5rem;
+  overflow: hidden;
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.05);
+}
+
+/* Card content max height with fade out */
+.content-fade-bottom {
+  position: relative;
+  max-height: 150px;
+  overflow: hidden;
+}
+
+.content-fade-bottom::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 40px;
+  background: linear-gradient(to bottom, transparent, var(--card-bg, white));
+  pointer-events: none;
+}
+
+/* Updated timestamp styling */
+.timestamp-badge {
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}

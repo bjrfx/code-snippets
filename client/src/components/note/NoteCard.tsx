@@ -42,8 +42,8 @@ export const NoteCard: FC<NoteCardProps> = ({ note, showActions = true }) => {
   return (
     <Link href={`/notes/${note.id}`}>
       <div className="cursor-pointer">
-        <Card className="h-full flex flex-col">
-          <CardHeader className="space-y-1">
+        <Card className="h-full flex flex-col enhanced-card card-hover-effect note-card">
+          <CardHeader className="space-y-1 card-header-accent">
             <div className="flex items-center justify-between">
               <h3 className="text-xl font-semibold">{note.title}</h3>
               <div className="flex space-x-2" onClick={(e) => e.stopPropagation()}>
@@ -61,6 +61,7 @@ export const NoteCard: FC<NoteCardProps> = ({ note, showActions = true }) => {
                           variant="ghost"
                           size="icon"
                           title="Edit note"
+                          className="hover:bg-accent/10 transition-colors"
                         >
                           <Pencil className="h-4 w-4" />
                         </Button>
@@ -72,6 +73,7 @@ export const NoteCard: FC<NoteCardProps> = ({ note, showActions = true }) => {
                       size="icon"
                       onClick={handleDelete}
                       title="Delete note"
+                      className="hover:bg-destructive/10 hover:text-destructive transition-colors"
                     >
                       <Trash className="h-4 w-4" />
                     </Button>
@@ -87,7 +89,7 @@ export const NoteCard: FC<NoteCardProps> = ({ note, showActions = true }) => {
                 <Link key={tag} href={`/tags/${encodeURIComponent(tag)}`} onClick={(e) => e.stopPropagation()}>
                   <Badge 
                     variant="secondary"
-                    className="cursor-pointer hover:bg-secondary/70"
+                    className="cursor-pointer hover:bg-secondary/70 enhanced-tag"
                   >
                     {tag}
                   </Badge>
@@ -95,11 +97,14 @@ export const NoteCard: FC<NoteCardProps> = ({ note, showActions = true }) => {
               ))}
             </div>
           </CardHeader>
-          <CardContent className="flex-1">
-            <div className="whitespace-pre-wrap">{note.content}</div>
+          <CardContent className="flex-1 fade-in-content">
+            <div className="whitespace-pre-wrap content-fade-bottom">{note.content}</div>
           </CardContent>
-          <CardFooter className="text-sm text-muted-foreground">
-            Last updated: {new Date(note.updatedAt).toLocaleDateString()}
+          <CardFooter className="text-sm text-muted-foreground card-footer-border">
+            <div className="timestamp-badge">
+              <span>Last updated:</span>
+              <span>{new Date(note.updatedAt).toLocaleDateString()}</span>
+            </div>
           </CardFooter>
         </Card>
       </div>

@@ -60,8 +60,8 @@ export const ChecklistCard: FC<ChecklistCardProps> = ({ checklist, showActions =
   return (
     <Link href={`/checklists/${checklist.id}`}>
       <div className="cursor-pointer">
-        <Card className="h-full flex flex-col">
-          <CardHeader className="space-y-1">
+        <Card className="h-full flex flex-col enhanced-card card-hover-effect checklist-card">
+          <CardHeader className="space-y-1 card-header-accent">
             <div className="flex items-center justify-between">
               <h3 className="text-xl font-semibold">{checklist.title}</h3>
               <div className="flex space-x-2" onClick={(e) => e.stopPropagation()}>
@@ -76,6 +76,7 @@ export const ChecklistCard: FC<ChecklistCardProps> = ({ checklist, showActions =
                           variant="ghost"
                           size="icon"
                           title="Edit checklist"
+                          className="hover:bg-accent/10 transition-colors"
                         >
                           <Pencil className="h-4 w-4" />
                         </Button>
@@ -87,6 +88,7 @@ export const ChecklistCard: FC<ChecklistCardProps> = ({ checklist, showActions =
                       size="icon"
                       onClick={handleDelete}
                       title="Delete checklist"
+                      className="hover:bg-destructive/10 hover:text-destructive transition-colors"
                     >
                       <Trash className="h-4 w-4" />
                     </Button>
@@ -102,7 +104,7 @@ export const ChecklistCard: FC<ChecklistCardProps> = ({ checklist, showActions =
                 <Link key={tag} href={`/tags/${encodeURIComponent(tag)}`} onClick={(e) => e.stopPropagation()}>
                   <Badge 
                     variant="secondary"
-                    className="cursor-pointer hover:bg-secondary/70"
+                    className="cursor-pointer hover:bg-secondary/70 enhanced-tag"
                   >
                     {tag}
                   </Badge>
@@ -110,7 +112,7 @@ export const ChecklistCard: FC<ChecklistCardProps> = ({ checklist, showActions =
               ))}
             </div>
           </CardHeader>
-          <CardContent className="flex-1">
+          <CardContent className="flex-1 fade-in-content">
             <ul className="space-y-2">
               {items.map((item: any, index: number) => (
                 <li key={index} className="flex items-center space-x-2" onClick={(e) => e.stopPropagation()}>
@@ -118,10 +120,11 @@ export const ChecklistCard: FC<ChecklistCardProps> = ({ checklist, showActions =
                     id={`item-${index}`}
                     checked={item.checked}
                     onCheckedChange={() => toggleItem(index)}
+                    className="checkbox-animation"
                   />
                   <label 
                     htmlFor={`item-${index}`}
-                    className={`text-sm ${item.checked ? 'line-through text-muted-foreground' : ''}`}
+                    className={`text-sm ${item.checked ? 'line-through text-muted-foreground' : ''} transition-all duration-200`}
                   >
                     {item.text}
                   </label>
@@ -129,8 +132,11 @@ export const ChecklistCard: FC<ChecklistCardProps> = ({ checklist, showActions =
               ))}
             </ul>
           </CardContent>
-          <CardFooter className="text-sm text-muted-foreground">
-            Last updated: {new Date(checklist.updatedAt).toLocaleDateString()}
+          <CardFooter className="text-sm text-muted-foreground card-footer-border">
+            <div className="timestamp-badge">
+              <span>Last updated:</span>
+              <span>{new Date(checklist.updatedAt).toLocaleDateString()}</span>
+            </div>
           </CardFooter>
         </Card>
       </div>

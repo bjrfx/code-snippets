@@ -21,8 +21,6 @@ export const SnippetCard: FC<SnippetCardProps> = ({ snippet, showActions = true 
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-
-
   const handleDelete = async () => {
     try {
       await deleteDoc(doc(db, 'snippets', snippet.id));
@@ -43,8 +41,8 @@ export const SnippetCard: FC<SnippetCardProps> = ({ snippet, showActions = true 
   return (
     <Link href={`/snippets/${snippet.id}`}>
       <div className="cursor-pointer">
-        <Card className="w-full">
-          <CardHeader className="space-y-1">
+        <Card className="w-full enhanced-card card-hover-effect snippet-card">
+          <CardHeader className="space-y-1 card-header-accent">
             <div className="flex items-center justify-between">
               <h3 className="text-xl font-semibold">{snippet.title}</h3>
               <div className="flex space-x-2" onClick={(e) => e.stopPropagation()}>
@@ -59,6 +57,7 @@ export const SnippetCard: FC<SnippetCardProps> = ({ snippet, showActions = true 
                           variant="ghost"
                           size="icon"
                           title="Edit snippet"
+                          className="hover:bg-accent/10 transition-colors"
                         >
                           <Pencil className="h-4 w-4" />
                         </Button>
@@ -70,6 +69,7 @@ export const SnippetCard: FC<SnippetCardProps> = ({ snippet, showActions = true 
                       size="icon"
                       onClick={handleDelete}
                       title="Delete snippet"
+                      className="hover:bg-destructive/10 hover:text-destructive transition-colors"
                     >
                       <Trash className="h-4 w-4" />
                     </Button>
@@ -85,7 +85,7 @@ export const SnippetCard: FC<SnippetCardProps> = ({ snippet, showActions = true 
                 <Link key={tag} href={`/tags/${encodeURIComponent(tag)}`} onClick={(e) => e.stopPropagation()}>
                   <Badge 
                     variant="secondary"
-                    className="cursor-pointer hover:bg-secondary/70"
+                    className="cursor-pointer hover:bg-secondary/70 enhanced-tag"
                   >
                     {tag}
                   </Badge>
@@ -93,8 +93,8 @@ export const SnippetCard: FC<SnippetCardProps> = ({ snippet, showActions = true 
               ))}
             </div>
           </CardHeader>
-          <CardContent>
-            <div className="h-[250px] rounded-md border overflow-auto">
+          <CardContent className="fade-in-content">
+            <div className="h-[250px] rounded-md border overflow-auto enhanced-code-editor">
               <CodeEditor
                 value={snippet.content}
                 language={snippet.language}
@@ -103,9 +103,11 @@ export const SnippetCard: FC<SnippetCardProps> = ({ snippet, showActions = true 
               />
             </div>
           </CardContent>
-          <CardFooter className="text-sm text-muted-foreground">
-            Last updated:{' '}
-            {new Date(snippet.updatedAt).toLocaleDateString()}
+          <CardFooter className="text-sm text-muted-foreground card-footer-border">
+            <div className="timestamp-badge">
+              <span>Last updated:</span>
+              <span>{new Date(snippet.updatedAt).toLocaleDateString()}</span>
+            </div>
           </CardFooter>
         </Card>
       </div>

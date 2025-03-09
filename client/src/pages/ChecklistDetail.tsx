@@ -119,7 +119,27 @@ export default function ChecklistDetail() {
       setItems(newItems);
 
       await updateDoc(doc(db, 'checklists', checklist.id), {
-        content: JSON.stringify(newItems)
+        content: JSON.stringify(newItems),
+        updatedAt: new Date().getTime()
+      });
+      
+      // Create an updated checklist object with the new data
+      const updatedChecklist = {
+        ...checklist,
+        content: JSON.stringify(newItems),
+        updatedAt: new Date().getTime(),
+      };
+      
+      // Update the React Query cache to include the updated checklist
+      queryClient.setQueryData(['items', user?.uid, 'checklists'], (oldData: any[] | undefined) => {
+        if (!oldData) return [updatedChecklist];
+        return oldData.map(item => item.id === checklist.id ? updatedChecklist : item);
+      });
+      
+      // Also update the folder items cache
+      queryClient.setQueryData(['folder-items', user?.uid, 'checklists'], (oldData: any[] | undefined) => {
+        if (!oldData) return [updatedChecklist];
+        return oldData.map(item => item.id === checklist.id ? updatedChecklist : item);
       });
 
       queryClient.invalidateQueries({ queryKey: ['items'] });
