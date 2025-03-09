@@ -106,7 +106,7 @@ export const SnippetCard: FC<SnippetCardProps> = ({ snippet, showActions = true 
           <CardFooter className="text-sm text-muted-foreground card-footer-border">
             <div className="timestamp-badge">
               <span>Last updated:</span>
-              <span>{new Date(snippet.updatedAt).toLocaleDateString()}</span>
+              <span>{snippet.updatedAt ? new Date(typeof snippet.updatedAt === 'object' && snippet.updatedAt.seconds ? snippet.updatedAt.seconds * 1000 : snippet.updatedAt).toLocaleDateString() : 'Unknown'}</span>
             </div>
           </CardFooter>
         </Card>

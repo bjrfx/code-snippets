@@ -135,7 +135,7 @@ export const ChecklistCard: FC<ChecklistCardProps> = ({ checklist, showActions =
           <CardFooter className="text-sm text-muted-foreground card-footer-border">
             <div className="timestamp-badge">
               <span>Last updated:</span>
-              <span>{new Date(checklist.updatedAt).toLocaleDateString()}</span>
+              <span>{checklist.updatedAt ? new Date(typeof checklist.updatedAt === 'object' && checklist.updatedAt.seconds ? checklist.updatedAt.seconds * 1000 : checklist.updatedAt).toLocaleDateString() : 'Unknown'}</span>
             </div>
           </CardFooter>
         </Card>

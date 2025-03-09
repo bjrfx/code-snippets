@@ -103,7 +103,7 @@ export const NoteCard: FC<NoteCardProps> = ({ note, showActions = true }) => {
           <CardFooter className="text-sm text-muted-foreground card-footer-border">
             <div className="timestamp-badge">
               <span>Last updated:</span>
-              <span>{new Date(note.updatedAt).toLocaleDateString()}</span>
+              <span>{note.updatedAt ? new Date(typeof note.updatedAt === 'object' && note.updatedAt.seconds ? note.updatedAt.seconds * 1000 : note.updatedAt).toLocaleDateString() : 'Unknown'}</span>
             </div>
           </CardFooter>
         </Card>
