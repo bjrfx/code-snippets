@@ -15,7 +15,15 @@ export function ProjectContent({ projectId, type, userId }: ProjectContentProps)
   const { data: items, isLoading, error } = useQuery<any[]>({
     queryKey: ['project-items', userId, projectId, type],
     queryFn: async () => {
-      if (!userId || !projectId) return [];
+      if (!userId) {
+        console.log(`No userId provided for ${type} in project ${projectId}`);
+        return [];
+      }
+      
+      if (!projectId) {
+        console.log(`No projectId provided for ${type}`);
+        return [];
+      }
       
       try {
         console.log(`Fetching ${type} for project ${projectId} and user ${userId}`);
@@ -30,18 +38,22 @@ export function ProjectContent({ projectId, type, userId }: ProjectContentProps)
           );
           
           const querySnapshot = await getDocs(q);
-          console.log(`${type} query snapshot for project:`, querySnapshot.size, 'documents');
+          console.log(`${type} query snapshot for project ${projectId}:`, querySnapshot.size, 'documents');
           
-          const results = querySnapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-          }));
+          const results = querySnapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+              id: doc.id,
+              ...data
+            };
+          });
           
+          console.log(`${type} results for project ${projectId}:`, results);
           return results;
         } catch (indexError: any) {
           // If we get an index error, fall back to a simpler query without ordering
           if (indexError.message && indexError.message.includes('index')) {
-            console.warn(`Index error for ${type} in project, falling back to simpler query:`, indexError.message);
+            console.warn(`Index error for ${type} in project ${projectId}, falling back to simpler query:`, indexError.message);
             
             const fallbackQuery = query(
               collection(db, type),
@@ -51,11 +63,15 @@ export function ProjectContent({ projectId, type, userId }: ProjectContentProps)
             );
             
             const fallbackSnapshot = await getDocs(fallbackQuery);
-            const fallbackResults = fallbackSnapshot.docs.map(doc => ({
-              id: doc.id,
-              ...doc.data()
-            }));
+            const fallbackResults = fallbackSnapshot.docs.map(doc => {
+              const data = doc.data();
+              return {
+                id: doc.id,
+                ...data
+              };
+            });
             
+            console.log(`${type} fallback results for project ${projectId}:`, fallbackResults);
             return fallbackResults;
           } else {
             // If it's not an index error, rethrow
@@ -63,12 +79,12 @@ export function ProjectContent({ projectId, type, userId }: ProjectContentProps)
           }
         }
       } catch (error) {
-        console.error(`Error fetching ${type} for project:`, error);
+        console.error(`Error fetching ${type} for project ${projectId}:`, error);
         throw error;
       }
     },
     enabled: !!userId && !!projectId,
-    staleTime: 60000, // 1 minute
+    staleTime: 30000, // 30 seconds to make it more responsive
     retry: 2
   });
 

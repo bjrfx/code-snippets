@@ -1,0 +1,14 @@
+{
+  "$schema": "https://aka.ms/azure/static-web-apps-cli/schema",
+  "configurations": {
+    "code-snippets": {
+      "appLocation": ".",
+      "outputLocation": "dist/public",
+      "appBuildCommand": "npm run build",
+      "run": "npm run dev",
+      "appDevserverUrl": "http://localhost:5173",
+      "appName": "code-snippets",
+      "resourceGroup": "code-snippets-rg"
+    }
+  }
+}

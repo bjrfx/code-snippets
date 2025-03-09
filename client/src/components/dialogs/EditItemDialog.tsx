@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -24,15 +24,17 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/lib/auth';
 import { db } from '@/lib/firebase';
-import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, updateDoc, serverTimestamp, collection, query, where, getDocs, addDoc } from 'firebase/firestore';
 import { CodeEditor } from '../snippet/CodeEditor';
 import { TagInput } from '@/components/ui/tag-input';
 import { useQueryClient } from '@tanstack/react-query';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const baseSchema = {
   title: z.string().min(1, 'Title is required'),
   description: z.string().optional(),
   tags: z.array(z.string()).default([]),
+  projectId: z.string().optional(),
 };
 
 const snippetSchema = z.object({
@@ -74,6 +76,67 @@ export function EditItemDialog({ type, itemId, defaultValues, trigger, onEdited 
       ? JSON.parse(defaultValues.content || '[]')
       : [{ text: '', checked: false }]
   );
+  
+  const [projects, setProjects] = useState<{id: string, name: string}[]>([]);
+  const [isCreatingProject, setIsCreatingProject] = useState(false);
+  const [newProjectName, setNewProjectName] = useState('');
+
+  // Fetch projects for the current user
+  useEffect(() => {
+    const fetchProjects = async () => {
+      if (!user) return;
+      
+      try {
+        const q = query(
+          collection(db, 'projects'),
+          where('userId', '==', user.uid)
+        );
+        
+        const querySnapshot = await getDocs(q);
+        const projectsData = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          name: doc.data().name,
+        }));
+        
+        setProjects(projectsData);
+      } catch (error) {
+        console.error('Error fetching projects:', error);
+      }
+    };
+    
+    fetchProjects();
+  }, [user]);
+
+  const createNewProject = async () => {
+    if (!user || !newProjectName.trim()) return;
+    
+    try {
+      const now = Date.now();
+      const projectRef = await addDoc(collection(db, 'projects'), {
+        name: newProjectName.trim(),
+        userId: user.uid,
+        createdAt: now,
+        updatedAt: now
+      });
+      
+      const newProject = {
+        id: projectRef.id,
+        name: newProjectName.trim()
+      };
+      
+      setProjects([...projects, newProject]);
+      form.setValue('projectId', projectRef.id);
+      setNewProjectName('');
+      setIsCreatingProject(false);
+    } catch (error: any) {
+      console.error('Error creating project:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: error.message || 'Failed to create project. Please try again.'
+      });
+    }
+  };
 
   const form = useForm<any>({
     resolver: zodResolver(
@@ -136,6 +199,16 @@ export function EditItemDialog({ type, itemId, defaultValues, trigger, onEdited 
       // Invalidate queries to ensure consistency
       queryClient.invalidateQueries({ queryKey: ['items'] });
       queryClient.invalidateQueries({ queryKey: ['folder-items'] });
+      
+      // Also invalidate project-specific queries if this item belongs to a project
+      if (data.projectId && data.projectId !== 'uncategorized') {
+        queryClient.invalidateQueries({ queryKey: ['project-items', user.uid, data.projectId] });
+      }
+      
+      // If the project association was changed, also invalidate the old project's queries
+      if (originalItem.projectId && originalItem.projectId !== data.projectId) {
+        queryClient.invalidateQueries({ queryKey: ['project-items', user.uid, originalItem.projectId] });
+      }
 
       toast({
         title: 'Success',
@@ -244,6 +317,72 @@ export function EditItemDialog({ type, itemId, defaultValues, trigger, onEdited 
                   </FormItem>
                 )}
               />
+              
+              <FormField
+                control={form.control}
+                name="projectId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Project</FormLabel>
+                    {isCreatingProject ? (
+                      <div className="flex gap-2">
+                        <FormControl>
+                          <Input
+                            value={newProjectName}
+                            onChange={(e) => setNewProjectName(e.target.value)}
+                            placeholder="Enter new project name"
+                          />
+                        </FormControl>
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          onClick={createNewProject}
+                          disabled={!newProjectName.trim()}
+                        >
+                          Create
+                        </Button>
+                        <Button 
+                          type="button" 
+                          variant="ghost" 
+                          onClick={() => setIsCreatingProject(false)}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="flex gap-2">
+                        <FormControl>
+                          <Select
+                            value={field.value}
+                            onValueChange={field.onChange}
+                          >
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Select a project or leave empty" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="uncategorized">Uncategorized</SelectItem>
+                              {projects.map((project) => (
+                                <SelectItem key={project.id} value={project.id}>
+                                  {project.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          onClick={() => setIsCreatingProject(true)}
+                        >
+                          New Project
+                        </Button>
+                      </div>
+                    )}
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
               {type !== 'checklist' ? (
                 <FormField
                   control={form.control}
@@ -292,6 +431,14 @@ export function EditItemDialog({ type, itemId, defaultValues, trigger, onEdited 
                         onChange={(e) => updateChecklistItem(index, e.target.value)}
                         placeholder="Enter checklist item"
                       />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => toggleChecklistItem(index)}
+                      >
+                        {item.checked ? '✓' : '○'}
+                      </Button>
                     </div>
                   ))}
                 </div>
