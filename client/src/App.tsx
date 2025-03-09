@@ -2,6 +2,7 @@ import { Switch, Route, useLocation } from 'wouter';
 import { Toaster } from '@/components/ui/toaster';
 import { useAuth } from './lib/auth';
 import { useTheme } from './hooks/use-theme';
+import { useFontSize } from './hooks/use-font-size';
 import { useEffect } from 'react';
 import Home from '@/pages/Home';
 import Auth from '@/pages/Auth';
@@ -50,8 +51,9 @@ function Router() {
 }
 
 function App() {
-  // Initialize theme after QueryClient is available
+  // Initialize theme and font size after QueryClient is available
   useTheme();
+  useFontSize();
 
   return (
     <>

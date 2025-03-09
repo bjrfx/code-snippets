@@ -2,6 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --font-size: 14px;
+}
+
 @layer base {
   * {
     @apply border-border;
@@ -9,5 +13,12 @@
 
   body {
     @apply font-sans antialiased bg-background text-foreground;
+    font-size: var(--font-size);
+  }
+
+  /* Apply gradient background for gradient themes */
+  .sunset, .ocean, .forest {
+    background: var(--gradient-background);
+    background-attachment: fixed;
   }
 }
