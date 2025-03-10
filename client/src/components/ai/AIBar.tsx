@@ -140,18 +140,24 @@ export function AIBar({ onClose }: AIBarProps) {
         const collectionName = itemType === 'snippet' ? 'snippets' : 
                              itemType === 'note' ? 'notes' : 'checklists';
 
-        // Create the item
-        const docRef = await addDoc(collection(db, collectionName), {
+        // Create the item with appropriate fields based on item type
+        const baseDocData = {
           title,
           description: '',
           content: generatedContent,
           tags,
           userId: user.uid,
           projectId: 'uncategorized',
-          language: itemType === 'snippet' ? language : undefined,
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp(),
-        });
+        };
+        
+        // Only add language field for snippets
+        if (itemType === 'snippet') {
+          baseDocData.language = language;
+        }
+        
+        const docRef = await addDoc(collection(db, collectionName), baseDocData);
 
         // Create a new item object with the data that was just saved
         const newItem = {
@@ -162,10 +168,14 @@ export function AIBar({ onClose }: AIBarProps) {
           tags,
           userId: user.uid,
           projectId: 'uncategorized',
-          language: itemType === 'snippet' ? language : undefined,
           createdAt: new Date().getTime(),
           updatedAt: new Date().getTime(),
         };
+
+        // Only add language field for snippets
+        if (itemType === 'snippet') {
+          newItem.language = language;
+        }
 
         // Update the React Query cache
         queryClient.setQueryData(['items', user.uid, collectionName], (oldData: any[] | undefined) => {
