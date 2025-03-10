@@ -3,7 +3,7 @@
   "configurations": {
     "code-snippets": {
       "appLocation": ".",
-      "outputLocation": "dist/public",
+      "outputLocation": "dist",
       "appBuildCommand": "npm run build",
       "run": "npm run dev",
       "appDevserverUrl": "http://localhost:5173",
