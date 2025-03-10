@@ -25,6 +25,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { ref, listAll, deleteObject } from 'firebase/storage';
+import { PremiumRequestsManager } from '@/components/admin/PremiumRequestsManager';
 
 export default function AdminDashboard() {
   const [, setLocation] = useLocation();
@@ -409,6 +410,8 @@ export default function AdminDashboard() {
             </div>
           </CardContent>
         </Card>
+        {/* Premium Feature Requests Manager */}
+        <PremiumRequestsManager />
       </div>
 
       {/* Delete User Confirmation Dialog */}

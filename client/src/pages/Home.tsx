@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { CreateItemDialog } from '@/components/dialogs/CreateItemDialog';
+import { PremiumFeatureAlert } from '@/components/PremiumFeatureAlert';
 import type { Snippet } from '@shared/schema';
 
 export default function Home() {
@@ -95,6 +96,9 @@ export default function Home() {
   return (
     <MainLayout>
       <div className="space-y-4 relative">
+        {/* Premium Feature Alert for free users */}
+        <PremiumFeatureAlert />
+        
         <Tabs defaultValue="snippets" onValueChange={setActiveTab}>
           <TabsList>
             <TabsTrigger value="snippets">Snippets</TabsTrigger>

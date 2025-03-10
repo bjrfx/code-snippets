@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button';
 import { useTheme } from '@/hooks/use-theme';
 import { useFontSize } from '@/hooks/use-font-size';
 import { useLocation } from 'wouter';
-import { ChevronLeft, Download, Upload, Trash2, FileDown } from 'lucide-react';
+import { ChevronLeft, Download, Upload, Trash2, FileDown, Lock } from 'lucide-react';
+import { useUserRole } from '@/hooks/use-user-role';
 import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
@@ -378,6 +379,36 @@ export default function Settings() {
     return date.toLocaleString();
   };
 
+  // Function to render premium feature badge (lock icon)  
+  const PremiumFeatureBadge = () => {
+    const { isPaid } = useUserRole();
+    
+    if (isPaid) return null;
+    
+    return (
+      <div className="flex items-center text-xs text-muted-foreground bg-muted px-2 py-1 rounded">
+        <Lock className="h-3 w-3 mr-1" />
+        Premium
+      </div>
+    );
+  };
+  
+  // Function to render overlay for premium features
+  const PremiumFeatureOverlay = () => {
+    const { isPaid } = useUserRole();
+    
+    if (isPaid) return null;
+    
+    return (
+      <div className="absolute inset-0 bg-background/50 backdrop-blur-[1px] flex items-center justify-center z-10 cursor-not-allowed">
+        <div className="flex flex-col items-center justify-center p-4 rounded-lg">
+          <Lock className="h-6 w-6 text-muted-foreground mb-2" />
+          <p className="text-sm text-muted-foreground text-center">Available with paid subscription</p>
+        </div>
+      </div>
+    );
+  };
+  
   return (
     <MainLayout>
       <div className="max-w-2xl mx-auto space-y-6">
@@ -394,35 +425,43 @@ export default function Settings() {
         </div>
 
         <Card>
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Appearance</CardTitle>
+            <PremiumFeatureBadge />
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="space-y-4">
               <Label>Theme</Label>
-              <ThemeSelector />
+              <div className="relative">
+                <ThemeSelector />
+                <PremiumFeatureOverlay />
+              </div>
             </div>
 
             <div className="space-y-2">
               <Label>Font Size</Label>
-              <Slider
-                value={[fontSize]}
-                max={20}
-                min={12}
-                step={1}
-                className="w-full"
-                onValueChange={handleFontSizeChange}
-              />
+              <div className="relative">
+                <Slider
+                  value={[fontSize]}
+                  max={20}
+                  min={12}
+                  step={1}
+                  className="w-full"
+                  onValueChange={handleFontSizeChange}
+                />
+                <PremiumFeatureOverlay />
+              </div>
             </div>
           </CardContent>
         </Card>
         
         {/* Backup & Restore Card */}
         <Card>
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Backup & Restore</CardTitle>
+            <PremiumFeatureBadge />
           </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-6 relative">
             <Alert>
               <AlertTitle>Important</AlertTitle>
               <AlertDescription>
@@ -450,6 +489,8 @@ export default function Settings() {
                 <Upload className="h-4 w-4" />
                 {isImporting ? 'Importing...' : 'Import Data'}
               </Button>
+              
+              <PremiumFeatureOverlay />
               <input
                 type="file"
                 ref={fileInputRef}
