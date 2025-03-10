@@ -32,14 +32,16 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
+      - name: Verify Build Output
+        run: ls -l dist/
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: github-pages
           path: './dist'
+          compression-level: 9
+          if-no-files-found: error
 
   deploy:
     environment:
