@@ -18,6 +18,7 @@ import TagDetail from '@/pages/TagDetail';
 import Projects from '@/pages/Projects';
 import Profile from '@/pages/Profile';
 import AdminDashboard from '@/pages/AdminDashboard';
+import UserDetail from '@/pages/UserDetail';
 
 function PrivateRoute({ component: Component }: { component: React.ComponentType }) {
   const { user, isLoading } = useAuth();
@@ -87,6 +88,7 @@ function Router() {
       <Route path="/projects" component={() => <PrivateRoute component={Projects} />} />
       <Route path="/profile" component={() => <PrivateRoute component={Profile} />} />
       <Route path="/admin" component={() => <AdminRoute component={AdminDashboard} />} />
+      <Route path="/admin/users/:id" component={() => <AdminRoute component={UserDetail} />} />
       <Route path="/snippets/:id" component={() => <PrivateRoute component={SnippetDetail} />} />
       <Route path="/notes/:id" component={() => <PrivateRoute component={NoteDetail} />} />
       <Route path="/checklists/:id" component={() => <PrivateRoute component={ChecklistDetail} />} />

@@ -5,17 +5,26 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useLocation } from 'wouter';
-import { ChevronLeft, UserCheck, UserX, Search, RefreshCw, Shield } from 'lucide-react';
+import { ChevronLeft, UserCheck, UserX, Search, RefreshCw, Shield, Trash2 } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
-import { collection, query, getDocs, doc, updateDoc, where } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { collection, query, getDocs, doc, updateDoc, where, deleteDoc, writeBatch } from 'firebase/firestore';
+import { db, storage } from '@/lib/firebase';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { ref, listAll, deleteObject } from 'firebase/storage';
 
 export default function AdminDashboard() {
   const [, setLocation] = useLocation();
@@ -25,6 +34,9 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredUsers, setFilteredUsers] = useState<any[]>([]);
+  const [userToDelete, setUserToDelete] = useState<any>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   // Fetch all users
   useEffect(() => {
@@ -123,6 +135,90 @@ export default function AdminDashboard() {
   const toggleAdminStatus = async (userId: string, currentStatus: boolean) => {
     const newRole = currentStatus ? USER_ROLES.FREE : USER_ROLES.ADMIN;
     await updateUserRole(userId, newRole);
+  };
+
+  // Delete user and all their data
+  const deleteUser = async (userId: string) => {
+    if (!userId) return;
+    
+    try {
+      setIsDeleting(true);
+      const batch = writeBatch(db);
+      
+      // Delete user's snippets
+      const snippetsQuery = query(collection(db, 'snippets'), where('userId', '==', userId));
+      const snippetsSnapshot = await getDocs(snippetsQuery);
+      snippetsSnapshot.docs.forEach(doc => {
+        batch.delete(doc.ref);
+      });
+      
+      // Delete user's notes
+      const notesQuery = query(collection(db, 'notes'), where('userId', '==', userId));
+      const notesSnapshot = await getDocs(notesQuery);
+      notesSnapshot.docs.forEach(doc => {
+        batch.delete(doc.ref);
+      });
+      
+      // Delete user's checklists
+      const checklistsQuery = query(collection(db, 'checklists'), where('userId', '==', userId));
+      const checklistsSnapshot = await getDocs(checklistsQuery);
+      checklistsSnapshot.docs.forEach(doc => {
+        batch.delete(doc.ref);
+      });
+      
+      // Delete user's projects
+      const projectsQuery = query(collection(db, 'projects'), where('userId', '==', userId));
+      const projectsSnapshot = await getDocs(projectsQuery);
+      projectsSnapshot.docs.forEach(doc => {
+        batch.delete(doc.ref);
+      });
+      
+      // Delete user's backups
+      const backupsQuery = query(collection(db, 'backups'), where('userId', '==', userId));
+      const backupsSnapshot = await getDocs(backupsQuery);
+      backupsSnapshot.docs.forEach(doc => {
+        batch.delete(doc.ref);
+      });
+      
+      // Delete user's storage files
+      try {
+        const storageRef = ref(storage, `backups/${userId}`);
+        const filesList = await listAll(storageRef);
+        
+        // Delete each file in the user's storage
+        const deletePromises = filesList.items.map(fileRef => deleteObject(fileRef));
+        await Promise.all(deletePromises);
+      } catch (storageError) {
+        console.error('Error deleting storage files:', storageError);
+        // Continue with user deletion even if storage deletion fails
+      }
+      
+      // Delete the user document
+      batch.delete(doc(db, 'users', userId));
+      
+      // Commit the batch
+      await batch.commit();
+      
+      // Update local state
+      setUsers(prevUsers => prevUsers.filter(u => u.id !== userId));
+      setFilteredUsers(prevUsers => prevUsers.filter(u => u.id !== userId));
+      
+      toast({
+        title: 'Success',
+        description: 'User and all associated data deleted successfully.'
+      });
+    } catch (error: any) {
+      console.error('Error deleting user:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to delete user and their data.'
+      });
+    } finally {
+      setIsDeleting(false);
+      setDeleteDialogOpen(false);
+      setUserToDelete(null);
+    }
   };
 
   return (
@@ -224,7 +320,11 @@ export default function AdminDashboard() {
                       </TableRow>
                     ) : (
                       filteredUsers.map((user) => (
-                        <TableRow key={user.id}>
+                        <TableRow 
+                          key={user.id} 
+                          className="cursor-pointer hover:bg-muted/50"
+                          onClick={() => setLocation(`/admin/users/${user.id}`)}
+                        >
                           <TableCell>{user.email}</TableCell>
                           <TableCell>{user.displayName || 'Not set'}</TableCell>
                           <TableCell>
@@ -237,30 +337,45 @@ export default function AdminDashboard() {
                               {user.role === 'admin' ? 'Admin' : user.role === 'paid' ? 'Paid' : user.role === 'free' ? 'Free' : 'No Role'}
                             </span>
                           </TableCell>
-                          <TableCell>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="flex items-center gap-1"
-                                >
-                                  <Shield className="h-4 w-4" />
-                                  Change Role
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent>
-                                <DropdownMenuItem onClick={() => updateUserRole(user.id, USER_ROLES.FREE)}>
-                                  Set as Free User
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => updateUserRole(user.id, USER_ROLES.PAID)}>
-                                  Set as Paid User
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => updateUserRole(user.id, USER_ROLES.ADMIN)}>
-                                  Set as Admin User
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
+                          <TableCell onClick={(e) => e.stopPropagation()}> {/* Prevent row click when clicking actions */}
+                            <div className="flex items-center gap-2">
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="flex items-center gap-1"
+                                  >
+                                    <Shield className="h-4 w-4" />
+                                    Change Role
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent>
+                                  <DropdownMenuItem onClick={() => updateUserRole(user.id, USER_ROLES.FREE)}>
+                                    Set as Free User
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => updateUserRole(user.id, USER_ROLES.PAID)}>
+                                    Set as Paid User
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => updateUserRole(user.id, USER_ROLES.ADMIN)}>
+                                    Set as Admin User
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                className="flex items-center gap-1"
+                                onClick={() => {
+                                  setUserToDelete(user);
+                                  setDeleteDialogOpen(true);
+                                }}
+                                disabled={user.id === window.user?.uid} // Prevent deleting yourself
+                              >
+                                <Trash2 className="h-4 w-4" />
+                                Delete
+                              </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))
@@ -308,6 +423,46 @@ export default function AdminDashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Delete User Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete User</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this user? This will permanently remove the user and all their data including snippets, notes, checklists, projects, and backups.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            {userToDelete && (
+              <div className="space-y-2">
+                <p><strong>Email:</strong> {userToDelete.email}</p>
+                <p><strong>Display Name:</strong> {userToDelete.displayName || 'Not set'}</p>
+                <p><strong>Role:</strong> {userToDelete.role || 'No Role'}</p>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setDeleteDialogOpen(false);
+                setUserToDelete(null);
+              }}
+              disabled={isDeleting}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => userToDelete && deleteUser(userToDelete.id)}
+              disabled={isDeleting}
+            >
+              {isDeleting ? 'Deleting...' : 'Delete User'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </MainLayout>
   );
 }
