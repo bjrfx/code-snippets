@@ -35,14 +35,21 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Verify Build Output
-        run: ls -R dist/
+      - name: Create static site directory
+        run: |
+          mkdir -p static-site
+          cp -r dist/assets static-site/
+          cp dist/index.html static-site/
+          # Don't copy server-side code (index.js)
+
+      - name: Verify Static Site Output
+        run: ls -R static-site/
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: github-pages
-          path: './dist'
+          path: './static-site'
           compression-level: 9
           if-no-files-found: error
 
