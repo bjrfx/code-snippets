@@ -12,6 +12,9 @@ interface ProjectContentProps {
 }
 
 export function ProjectContent({ projectId, type, userId }: ProjectContentProps) {
+  // Check if this is for uncategorized items (empty string or 'uncategorized')
+  const isUncategorized = projectId === '' || projectId === 'uncategorized';
+  
   const { data: items, isLoading, error } = useQuery<any[]>({
     queryKey: ['project-items', userId, projectId, type],
     queryFn: async () => {
@@ -20,22 +23,30 @@ export function ProjectContent({ projectId, type, userId }: ProjectContentProps)
         return [];
       }
       
-      if (!projectId) {
-        console.log(`No projectId provided for ${type}`);
-        return [];
-      }
-      
       try {
         console.log(`Fetching ${type} for project ${projectId} and user ${userId}`);
         
         // Try first with the composite query (requires index)
         try {
-          const q = query(
-            collection(db, type),
-            where('userId', '==', userId),
-            where('projectId', '==', projectId),
-            orderBy('updatedAt', 'desc')
-          );
+          let q;
+          
+          if (isUncategorized) {
+            // For uncategorized items, we need to query for items where projectId is null, undefined, empty string, or 'uncategorized'
+            q = query(
+              collection(db, type),
+              where('userId', '==', userId),
+              where('projectId', 'in', [null, '', 'uncategorized']),
+              orderBy('updatedAt', 'desc')
+            );
+          } else {
+            // For regular projects
+            q = query(
+              collection(db, type),
+              where('userId', '==', userId),
+              where('projectId', '==', projectId),
+              orderBy('updatedAt', 'desc')
+            );
+          }
           
           const querySnapshot = await getDocs(q);
           console.log(`${type} query snapshot for project ${projectId}:`, querySnapshot.size, 'documents');
@@ -55,24 +66,81 @@ export function ProjectContent({ projectId, type, userId }: ProjectContentProps)
           if (indexError.message && indexError.message.includes('index')) {
             console.warn(`Index error for ${type} in project ${projectId}, falling back to simpler query:`, indexError.message);
             
-            const fallbackQuery = query(
-              collection(db, type),
-              where('userId', '==', userId),
-              where('projectId', '==', projectId),
-              limit(10) // Limit results as we can't order them
-            );
+            let fallbackQuery;
             
-            const fallbackSnapshot = await getDocs(fallbackQuery);
-            const fallbackResults = fallbackSnapshot.docs.map(doc => {
-              const data = doc.data();
-              return {
+            if (isUncategorized) {
+              // For uncategorized items with fallback query
+              fallbackQuery = query(
+                collection(db, type),
+                where('userId', '==', userId),
+                where('projectId', '==', ''),  // Try with empty string first
+                limit(10)
+              );
+              
+              const emptyStringSnapshot = await getDocs(fallbackQuery);
+              let fallbackResults = emptyStringSnapshot.docs.map(doc => ({
                 id: doc.id,
-                ...data
-              };
-            });
-            
-            console.log(`${type} fallback results for project ${projectId}:`, fallbackResults);
-            return fallbackResults;
+                ...doc.data()
+              }));
+              
+              // Then try with 'uncategorized'
+              const uncategorizedQuery = query(
+                collection(db, type),
+                where('userId', '==', userId),
+                where('projectId', '==', 'uncategorized'),
+                limit(10)
+              );
+              
+              const uncategorizedSnapshot = await getDocs(uncategorizedQuery);
+              fallbackResults = [
+                ...fallbackResults,
+                ...uncategorizedSnapshot.docs.map(doc => ({
+                  id: doc.id,
+                  ...doc.data()
+                }))
+              ];
+              
+              // Finally try with null projectId
+              const nullQuery = query(
+                collection(db, type),
+                where('userId', '==', userId),
+                where('projectId', '==', null),
+                limit(10)
+              );
+              
+              try {
+                const nullSnapshot = await getDocs(nullQuery);
+                fallbackResults = [
+                  ...fallbackResults,
+                  ...nullSnapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                  }))
+                ];
+              } catch (nullError) {
+                console.warn('Error querying for null projectId:', nullError);
+              }
+              
+              console.log(`${type} fallback results for uncategorized:`, fallbackResults);
+              return fallbackResults;
+            } else {
+              // For regular projects with fallback query
+              fallbackQuery = query(
+                collection(db, type),
+                where('userId', '==', userId),
+                where('projectId', '==', projectId),
+                limit(10) // Limit results as we can't order them
+              );
+              
+              const fallbackSnapshot = await getDocs(fallbackQuery);
+              const fallbackResults = fallbackSnapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+              }));
+              
+              console.log(`${type} fallback results for project ${projectId}:`, fallbackResults);
+              return fallbackResults;
+            }
           } else {
             // If it's not an index error, rethrow
             throw indexError;
@@ -83,8 +151,10 @@ export function ProjectContent({ projectId, type, userId }: ProjectContentProps)
         throw error;
       }
     },
-    enabled: !!userId && !!projectId,
-    staleTime: 30000, // 30 seconds to make it more responsive
+    enabled: !!userId && (!!projectId || isUncategorized),
+    staleTime: 5000, // 5 seconds to make it more responsive for uncategorized items
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
     retry: 2
   });
 

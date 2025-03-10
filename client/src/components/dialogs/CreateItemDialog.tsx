@@ -199,9 +199,13 @@ export function CreateItemDialog({ type, trigger, onCreated }: CreateItemDialogP
       queryClient.invalidateQueries({ queryKey: ['items'] });
       queryClient.invalidateQueries({ queryKey: ['folder-items'] });
       
-      // Also invalidate project-specific queries if this item belongs to a project
-      if (data.projectId && data.projectId !== 'uncategorized') {
-        queryClient.invalidateQueries({ queryKey: ['project-items', user.uid, data.projectId] });
+      // Always invalidate project-specific queries, including uncategorized items
+      queryClient.invalidateQueries({ queryKey: ['project-items', user.uid, data.projectId || ''] });
+      
+      // Also invalidate the general uncategorized queries to ensure they update
+      if (data.projectId === 'uncategorized' || data.projectId === '' || !data.projectId) {
+        queryClient.invalidateQueries({ queryKey: ['project-items', user.uid, ''] });
+        queryClient.invalidateQueries({ queryKey: ['project-items', user.uid, 'uncategorized'] });
       }
 
       toast({

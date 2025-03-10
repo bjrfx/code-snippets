@@ -71,6 +71,7 @@ export function EditItemDialog({ type, itemId, defaultValues, trigger, onEdited 
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [originalItem] = useState(defaultValues); // Store the original item data
   const [checklistItems, setChecklistItems] = useState(
     type === 'checklist' 
       ? JSON.parse(defaultValues.content || '[]')
@@ -200,9 +201,13 @@ export function EditItemDialog({ type, itemId, defaultValues, trigger, onEdited 
       queryClient.invalidateQueries({ queryKey: ['items'] });
       queryClient.invalidateQueries({ queryKey: ['folder-items'] });
       
-      // Also invalidate project-specific queries if this item belongs to a project
-      if (data.projectId && data.projectId !== 'uncategorized') {
-        queryClient.invalidateQueries({ queryKey: ['project-items', user.uid, data.projectId] });
+      // Always invalidate project-specific queries, including uncategorized items
+      queryClient.invalidateQueries({ queryKey: ['project-items', user.uid, data.projectId || ''] });
+      
+      // Also invalidate the general uncategorized queries to ensure they update
+      if (data.projectId === 'uncategorized' || data.projectId === '' || !data.projectId) {
+        queryClient.invalidateQueries({ queryKey: ['project-items', user.uid, ''] });
+        queryClient.invalidateQueries({ queryKey: ['project-items', user.uid, 'uncategorized'] });
       }
       
       // If the project association was changed, also invalidate the old project's queries
