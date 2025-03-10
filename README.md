@@ -1,6 +1,7 @@
 # Code Snippets
 
 A modern web application for managing and organizing code snippets, notes, and checklists with AI-powered content generation capabilities.
+
 **Documentation:** [Visit the Code Snippets full notes](https://bjrfx.github.io/code-snippets) - Comprehensive documentation and usage guides.
 
 **Try it out:** [Live Demo](https://mango-sea-071c1eb1e-preview.westus2.6.azurestaticapps.net/) - Experience the application instantly in your browser.
