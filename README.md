@@ -6,12 +6,16 @@ A modern web application for managing and organizing code snippets, notes, and c
 
 Code Snippets is a full-stack application that helps developers store, organize, and retrieve their code snippets, notes, and checklists. It features a clean, intuitive interface with project organization, tagging, and powerful AI assistance for generating content.
 
+![Code Snippets Light Mode](assets/images/Snippets-light.png)
+![Code Snippets Dark Mode](assets/images/Snippets-dark.png)
+
 ## Features
 
 ### Core Functionality
 
 - **Multiple Content Types**: Store and manage code snippets, notes, and checklists in one place
 - **Project Organization**: Group related items into projects for better organization
+  ![Projects View](assets/images/Projects-light.png)
 - **Tagging System**: Add tags to items for easy filtering and searching
 - **User Authentication**: Secure user accounts with Firebase authentication
 - **Responsive Design**: Works seamlessly on desktop and mobile devices
@@ -29,6 +33,7 @@ Code Snippets is a full-stack application that helps developers store, organize,
 
 - **Syntax Highlighting**: Code is displayed with proper syntax highlighting
 - **Customizable Settings**: Adjust theme and font size to your preference
+  ![Appearance Settings](assets/images/Appearence.png)
 - **Real-time Updates**: Changes are reflected immediately across the application
 
 ## Technology Stack
@@ -119,6 +124,8 @@ npm run start
 
 ## Using the AI Features
 
+![Gradient UI](assets/images/Gradient.png)
+
 1. Click on the sparkle icon in the application to open the AI Bar
 2. Enter a prompt describing what you want to create:
    - For code snippets: "Create a snippet for sorting an array in JavaScript"
@@ -157,6 +164,10 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
+
+## User Profile
+
+![User Profile](assets/images/profile.png)
 
 ## Acknowledgements
 
