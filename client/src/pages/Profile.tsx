@@ -24,6 +24,7 @@ export default function Profile() {
   const [isUploading, setIsUploading] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -38,6 +39,7 @@ export default function Profile() {
           setDisplayName(userData.displayName || '');
           setProfileUrl(userData.profileUrl || null);
           setIsAdmin(!!userData.isAdmin);
+          setUserRole(userData.role || null);
         }
       } catch (error: any) {
         console.error('Error fetching user profile:', error);
@@ -163,10 +165,28 @@ export default function Profile() {
           </Button>
           <div className="flex items-center">
             <h1 className="text-2xl font-bold">Profile</h1>
-            {isAdmin && (
-              <Badge className="ml-2 bg-primary/20 text-primary flex items-center gap-1">
+            {userRole === 'admin' && (
+              <Badge className="ml-2 bg-amber-100 text-amber-800 border border-amber-300 flex items-center gap-1">
                 <Shield className="h-3 w-3" />
-                Admin
+                Admin User
+              </Badge>
+            )}
+            {userRole === 'paid' && (
+              <Badge className="ml-2 bg-amber-100 text-amber-800 border border-amber-300 flex items-center gap-1">
+                <Shield className="h-3 w-3" />
+                Paid User
+              </Badge>
+            )}
+            {userRole === 'free' && (
+              <Badge className="ml-2 bg-blue-100 text-blue-800 border border-blue-300 flex items-center gap-1">
+                <Shield className="h-3 w-3" />
+                Free User
+              </Badge>
+            )}
+            {!userRole && (
+              <Badge className="ml-2 bg-gray-100 text-gray-800 border border-gray-300 flex items-center gap-1">
+                <Shield className="h-3 w-3" />
+                No Role Assigned
               </Badge>
             )}
           </div>

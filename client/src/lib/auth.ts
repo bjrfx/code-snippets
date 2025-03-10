@@ -26,6 +26,7 @@ export async function signIn(email: string, password: string) {
         email: result.user.email,
         createdAt: serverTimestamp(),
         isAdmin: false, // Default to non-admin user
+        role: 'free', // Default role
         settings: {
           theme: 'light',
           fontSize: 14
@@ -52,6 +53,7 @@ export async function signUp(email: string, password: string) {
       email: result.user.email,
       createdAt: serverTimestamp(),
       isAdmin: false, // Default to non-admin user
+      role: 'free', // Default role for new users
       settings: {
         theme: 'light',
         fontSize: 14

@@ -5,11 +5,17 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useLocation } from 'wouter';
-import { ChevronLeft, UserCheck, UserX, Search, RefreshCw } from 'lucide-react';
+import { ChevronLeft, UserCheck, UserX, Search, RefreshCw, Shield } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
 import { collection, query, getDocs, doc, updateDoc, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 export default function AdminDashboard() {
   const [, setLocation] = useLocation();
@@ -67,38 +73,56 @@ export default function AdminDashboard() {
     setFilteredUsers(filtered);
   }, [searchQuery, users]);
 
-  // Toggle admin status
-  const toggleAdminStatus = async (userId: string, currentStatus: boolean) => {
+  // User roles configuration
+  const USER_ROLES = {
+    FREE: 'free',
+    PAID: 'paid',
+    ADMIN: 'admin'
+  };
+
+  // Update user role
+  const updateUserRole = async (userId: string, newRole: string) => {
     try {
-      await updateDoc(doc(db, 'users', userId), {
-        isAdmin: !currentStatus
-      });
+      // Prepare update data
+      const updateData = {
+        role: newRole,
+        // Keep isAdmin field for backward compatibility
+        isAdmin: newRole === USER_ROLES.ADMIN
+      };
+      
+      await updateDoc(doc(db, 'users', userId), updateData);
       
       // Update local state
       setUsers(prevUsers => 
         prevUsers.map(u => 
-          u.id === userId ? { ...u, isAdmin: !currentStatus } : u
+          u.id === userId ? { ...u, role: newRole, isAdmin: newRole === USER_ROLES.ADMIN } : u
         )
       );
       
       setFilteredUsers(prevUsers => 
         prevUsers.map(u => 
-          u.id === userId ? { ...u, isAdmin: !currentStatus } : u
+          u.id === userId ? { ...u, role: newRole, isAdmin: newRole === USER_ROLES.ADMIN } : u
         )
       );
       
       toast({
         title: 'Success',
-        description: `User admin status updated successfully.`
+        description: `User role updated to ${newRole} successfully.`
       });
     } catch (error: any) {
-      console.error('Error updating admin status:', error);
+      console.error('Error updating user role:', error);
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: 'Failed to update admin status.'
+        description: 'Failed to update user role.'
       });
     }
+  };
+  
+  // Legacy function for backward compatibility
+  const toggleAdminStatus = async (userId: string, currentStatus: boolean) => {
+    const newRole = currentStatus ? USER_ROLES.FREE : USER_ROLES.ADMIN;
+    await updateUserRole(userId, newRole);
   };
 
   return (
@@ -187,7 +211,7 @@ export default function AdminDashboard() {
                       <TableHead>Email</TableHead>
                       <TableHead>Display Name</TableHead>
                       <TableHead>Created At</TableHead>
-                      <TableHead>Admin Status</TableHead>
+                      <TableHead>User Role</TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -209,29 +233,34 @@ export default function AdminDashboard() {
                               'Unknown'}
                           </TableCell>
                           <TableCell>
-                            <span className={`px-2 py-1 rounded-full text-xs ${user.isAdmin ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
-                              {user.isAdmin ? 'Admin' : 'User'}
+                            <span className={`px-2 py-1 rounded-full text-xs ${user.role === 'admin' ? 'bg-amber-100 text-amber-800 border border-amber-300' : user.role === 'paid' ? 'bg-amber-100 text-amber-800 border border-amber-300' : 'bg-blue-100 text-blue-800 border border-blue-300'}`}>
+                              {user.role === 'admin' ? 'Admin' : user.role === 'paid' ? 'Paid' : user.role === 'free' ? 'Free' : 'No Role'}
                             </span>
                           </TableCell>
                           <TableCell>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => toggleAdminStatus(user.id, !!user.isAdmin)}
-                              className="flex items-center gap-1"
-                            >
-                              {user.isAdmin ? (
-                                <>
-                                  <UserX className="h-4 w-4" />
-                                  Remove Admin
-                                </>
-                              ) : (
-                                <>
-                                  <UserCheck className="h-4 w-4" />
-                                  Make Admin
-                                </>
-                              )}
-                            </Button>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="flex items-center gap-1"
+                                >
+                                  <Shield className="h-4 w-4" />
+                                  Change Role
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent>
+                                <DropdownMenuItem onClick={() => updateUserRole(user.id, USER_ROLES.FREE)}>
+                                  Set as Free User
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => updateUserRole(user.id, USER_ROLES.PAID)}>
+                                  Set as Paid User
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => updateUserRole(user.id, USER_ROLES.ADMIN)}>
+                                  Set as Admin User
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </TableCell>
                         </TableRow>
                       ))
@@ -257,16 +286,22 @@ export default function AdminDashboard() {
                 <h3 className="text-sm font-medium">Total Users</h3>
                 <p className="text-2xl font-bold">{users.length}</p>
               </div>
-              <div className="bg-primary/10 p-4 rounded-lg">
-                <h3 className="text-sm font-medium">Admin Users</h3>
-                <p className="text-2xl font-bold">
-                  {users.filter(user => user.isAdmin).length}
+              <div className="bg-amber-100 p-4 rounded-lg border border-amber-300">
+                <h3 className="text-sm font-medium text-amber-800">Admin Users</h3>
+                <p className="text-2xl font-bold text-amber-800">
+                  {users.filter(user => user.role === 'admin').length}
                 </p>
               </div>
-              <div className="bg-primary/10 p-4 rounded-lg">
-                <h3 className="text-sm font-medium">Regular Users</h3>
-                <p className="text-2xl font-bold">
-                  {users.filter(user => !user.isAdmin).length}
+              <div className="bg-amber-100 p-4 rounded-lg border border-amber-300">
+                <h3 className="text-sm font-medium text-amber-800">Paid Users</h3>
+                <p className="text-2xl font-bold text-amber-800">
+                  {users.filter(user => user.role === 'paid').length}
+                </p>
+              </div>
+              <div className="bg-blue-100 p-4 rounded-lg border border-blue-300">
+                <h3 className="text-sm font-medium text-blue-800">Free Users</h3>
+                <p className="text-2xl font-bold text-blue-800">
+                  {users.filter(user => user.role === 'free').length}
                 </p>
               </div>
             </div>
