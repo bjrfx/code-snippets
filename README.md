@@ -174,17 +174,17 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ### User Management
 The admin dashboard provides powerful user management capabilities, allowing administrators to view all users, filter by role, and modify user permissions.
 
-![User Management](assets/images/admin-user managment.png)
+![User Management](assets/images/admin-user-managment.png)
 
 ### User Information
 Detailed user information is available to administrators, including email, creation date, and current role status.
 
-![User Information](assets/images/admin-user information.png)
+![User Information](assets/images/admin-user-information.png)
 
 ### Premium Access Requests
 Administrators can manage premium access requests, granting temporary or permanent premium status to users.
 
-![Premium Access Requests](assets/images/admin-premium access request.png)
+![Premium Access Requests](assets/images/admin-premium-access-request.png)
 
 ## Acknowledgements
 
