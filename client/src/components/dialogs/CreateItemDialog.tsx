@@ -167,8 +167,16 @@ export function CreateItemDialog({ type, trigger, onCreated }: CreateItemDialogP
         JSON.stringify(checklistItems.filter(item => item.text.trim())) :
         data.content;
 
+      // Create a data object without the language field for notes and checklists
+      const itemData = { ...data };
+      
+      // Only include language field for snippets
+      if (type !== 'snippet' && 'language' in itemData) {
+        delete itemData.language;
+      }
+
       const docRef = await addDoc(collection(db, collectionName), {
-        ...data,
+        ...itemData,
         content,
         userId: user.uid,
         createdAt: serverTimestamp(),
@@ -178,7 +186,7 @@ export function CreateItemDialog({ type, trigger, onCreated }: CreateItemDialogP
       // Create a new item object with the data that was just saved
       const newItem = {
         id: docRef.id,
-        ...data,
+        ...itemData,
         content,
         userId: user.uid,
         createdAt: new Date().getTime(),

@@ -170,8 +170,16 @@ export function EditItemDialog({ type, itemId, defaultValues, trigger, onEdited 
         JSON.stringify(checklistItems.filter(item => item.text.trim())) :
         data.content;
 
+      // Create a data object without the language field for notes and checklists
+      const itemData = { ...data };
+      
+      // Only include language field for snippets
+      if (type !== 'snippet' && 'language' in itemData) {
+        delete itemData.language;
+      }
+
       await updateDoc(doc(db, collectionName, itemId), {
-        ...data,
+        ...itemData,
         content,
         updatedAt: serverTimestamp(),
       });
@@ -179,7 +187,7 @@ export function EditItemDialog({ type, itemId, defaultValues, trigger, onEdited 
       // Create an updated item object with the new data
       const updatedItem = {
         id: itemId,
-        ...data,
+        ...itemData,
         content,
         userId: user.uid,
         updatedAt: new Date().getTime(),
