@@ -1,12 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import { useLocation } from 'wouter';
-import { ChevronLeft, Upload, Camera, User, Edit2, LogOut } from 'lucide-react';
+import { ChevronLeft, Upload, Camera, User, Edit2, LogOut, Shield } from 'lucide-react';
 import { useAuth, signOut } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
 import { doc, updateDoc, getDoc } from 'firebase/firestore';
@@ -22,6 +23,7 @@ export default function Profile() {
   const [profileUrl, setProfileUrl] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -35,6 +37,7 @@ export default function Profile() {
           setEmail(userData.email || '');
           setDisplayName(userData.displayName || '');
           setProfileUrl(userData.profileUrl || null);
+          setIsAdmin(!!userData.isAdmin);
         }
       } catch (error: any) {
         console.error('Error fetching user profile:', error);
@@ -158,7 +161,15 @@ export default function Profile() {
             <ChevronLeft className="h-4 w-4 mr-2" />
             Back
           </Button>
-          <h1 className="text-2xl font-bold">Profile</h1>
+          <div className="flex items-center">
+            <h1 className="text-2xl font-bold">Profile</h1>
+            {isAdmin && (
+              <Badge className="ml-2 bg-primary/20 text-primary flex items-center gap-1">
+                <Shield className="h-3 w-3" />
+                Admin
+              </Badge>
+            )}
+          </div>
         </div>
 
         {/* Profile Picture Card */}

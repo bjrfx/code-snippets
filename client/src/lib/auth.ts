@@ -25,6 +25,7 @@ export async function signIn(email: string, password: string) {
       await setDoc(doc(db, 'users', result.user.uid), {
         email: result.user.email,
         createdAt: serverTimestamp(),
+        isAdmin: false, // Default to non-admin user
         settings: {
           theme: 'light',
           fontSize: 14
@@ -50,6 +51,7 @@ export async function signUp(email: string, password: string) {
     await setDoc(doc(db, 'users', result.user.uid), {
       email: result.user.email,
       createdAt: serverTimestamp(),
+      isAdmin: false, // Default to non-admin user
       settings: {
         theme: 'light',
         fontSize: 14

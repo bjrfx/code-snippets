@@ -1,4 +1,7 @@
 import { Switch, Route, useLocation } from 'wouter';
+import { useState } from 'react';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from './lib/firebase';
 import { Toaster } from '@/components/ui/toaster';
 import { useAuth } from './lib/auth';
 import { useTheme } from './hooks/use-theme';
@@ -14,6 +17,7 @@ import ChecklistDetail from '@/pages/ChecklistDetail';
 import TagDetail from '@/pages/TagDetail';
 import Projects from '@/pages/Projects';
 import Profile from '@/pages/Profile';
+import AdminDashboard from '@/pages/AdminDashboard';
 
 function PrivateRoute({ component: Component }: { component: React.ComponentType }) {
   const { user, isLoading } = useAuth();
@@ -32,6 +36,47 @@ function PrivateRoute({ component: Component }: { component: React.ComponentType
   return user ? <Component /> : null;
 }
 
+function AdminRoute({ component: Component }: { component: React.ComponentType }) {
+  const { user, isLoading } = useAuth();
+  const [, navigate] = useLocation();
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      if (!user) {
+        navigate('/auth');
+        return;
+      }
+
+      try {
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          setIsAdmin(!!userData.isAdmin);
+          if (!userData.isAdmin) {
+            navigate('/');
+          }
+        } else {
+          navigate('/');
+        }
+      } catch (error) {
+        console.error('Error checking admin status:', error);
+        navigate('/');
+      }
+    };
+
+    if (!isLoading) {
+      checkAdminStatus();
+    }
+  }, [user, isLoading, navigate]);
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  return (user && isAdmin) ? <Component /> : null;
+}
+
 function Router() {
   // Remove the duplicate auth check here
   return (
@@ -41,6 +86,7 @@ function Router() {
       <Route path="/settings" component={() => <PrivateRoute component={Settings} />} />
       <Route path="/projects" component={() => <PrivateRoute component={Projects} />} />
       <Route path="/profile" component={() => <PrivateRoute component={Profile} />} />
+      <Route path="/admin" component={() => <AdminRoute component={AdminDashboard} />} />
       <Route path="/snippets/:id" component={() => <PrivateRoute component={SnippetDetail} />} />
       <Route path="/notes/:id" component={() => <PrivateRoute component={NoteDetail} />} />
       <Route path="/checklists/:id" component={() => <PrivateRoute component={ChecklistDetail} />} />

@@ -7,7 +7,7 @@ import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/lib/auth';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { collection, query, where, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, where, getDocs, addDoc, serverTimestamp, getDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import {
   Search,
@@ -24,7 +24,8 @@ import {
   Plus,
   Folder,
   Home,
-  UserCircle
+  UserCircle,
+  UserCheck
 } from 'lucide-react';
 import { CreateItemDialog } from '@/components/dialogs/CreateItemDialog';
 import { FolderContent } from './FolderContent';
@@ -53,6 +54,7 @@ export function Sidebar() {
     notes: true,
     checklists: true
   });
+  const [isAdmin, setIsAdmin] = useState(false);
   
   // Search functionality
   const [searchResults, setSearchResults] = useState<{
@@ -225,6 +227,25 @@ export function Sidebar() {
     },
     enabled: !!user
   });
+
+  // Check if user is admin
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      if (!user) return;
+      
+      try {
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          setIsAdmin(!!userData.isAdmin);
+        }
+      } catch (error) {
+        console.error('Error checking admin status:', error);
+      }
+    };
+    
+    checkAdminStatus();
+  }, [user]);
 
   if (!user) return null;
 
@@ -991,6 +1012,18 @@ export function Sidebar() {
                 {!isCollapsed && "Profile"}
               </Button>
             </Link>
+            {isAdmin && (
+              <Link href="/admin">
+                <Button
+                  variant="ghost"
+                  className={`${isCollapsed ? 'justify-center' : 'w-full justify-start'} ${location === '/admin' ? 'bg-accent' : ''}`}
+                  title="Admin Dashboard"
+                >
+                  <UserCheck className={isCollapsed ? 'h-4 w-4' : 'mr-2 h-4 w-4'} />
+                  {!isCollapsed && "Admin Dashboard"}
+                </Button>
+              </Link>
+            )}
             <Link href="/settings">
               <Button
                 variant="ghost"
