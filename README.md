@@ -190,6 +190,44 @@ Administrators can manage premium access requests, granting temporary or permane
 
 ![Premium Access Requests](assets/images/admin-premium-access-request.png)
 
+## Mobile Experience
+
+Code Snippets provides a seamless mobile experience with a responsive design optimized for smartphones and tablets. The mobile interface maintains all the functionality of the desktop version while adapting to smaller screens.
+
+### Key Mobile Features
+
+- **Touch-Optimized Interface**: Easily navigate and interact with your content using touch gestures
+- **Bottom Navigation Bar**: Quick access to essential sections of the app
+- **Responsive Layout**: Content adapts perfectly to any screen size
+- **Progressive Web App (PWA)**: Install on your home screen for app-like experience
+
+### Mobile Screenshots
+
+#### Home Screen
+Access your recent snippets, notes, and checklists from the home screen.
+
+![Mobile Home Screen](assets/images/mobile%20view/Home.PNG)
+
+#### Projects View
+Organize and navigate between your different projects.
+
+![Mobile Projects View](assets/images/mobile%20view/Projects.PNG)
+
+#### Search Functionality
+Quickly find any content across your entire collection.
+
+![Mobile Search](assets/images/mobile%20view/Search.PNG)
+
+#### User Profile
+Manage your account and view your statistics.
+
+![Mobile Profile](assets/images/mobile%20view/Profile.PNG)
+
+#### Settings
+Customize your experience with various options and preferences.
+
+![Mobile Settings](assets/images/mobile%20view/Settings.PNG)
+
 ## Acknowledgements
 
 - [Cohere](https://cohere.ai/) for providing the AI text generation API

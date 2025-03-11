@@ -8,6 +8,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { generateContent, generateNote, generateSnippet, generateChecklist } from '@/lib/cohere';
+import { useIsMobile } from '@/hooks/use-is-mobile';
 
 interface AIBarProps {
   onClose?: () => void;
@@ -17,10 +18,12 @@ export function AIBar({ onClose }: AIBarProps) {
   const [prompt, setPrompt] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const isMobile = useIsMobile();
 
   // Focus the input when the component is expanded
   useEffect(() => {
@@ -28,6 +31,49 @@ export function AIBar({ onClose }: AIBarProps) {
       inputRef.current.focus();
     }
   }, [isExpanded]);
+
+  // Handle keyboard visibility on mobile devices
+  useEffect(() => {
+    if (!isMobile) return;
+    
+    // Use VisualViewport API to detect keyboard
+    const handleResize = () => {
+      if (window.visualViewport) {
+        const currentHeight = window.visualViewport.height;
+        const windowHeight = window.innerHeight;
+        
+        // If visual viewport is smaller than window height, keyboard is likely open
+        if (currentHeight < windowHeight) {
+          const keyboardHeight = windowHeight - currentHeight;
+          setKeyboardHeight(keyboardHeight);
+        } else {
+          setKeyboardHeight(0);
+        }
+      }
+    };
+
+    // Add event listeners
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', handleResize);
+      window.visualViewport.addEventListener('scroll', handleResize);
+    } else {
+      // Fallback for browsers without VisualViewport API
+      window.addEventListener('resize', handleResize);
+    }
+
+    // Initial check
+    handleResize();
+
+    // Cleanup
+    return () => {
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', handleResize);
+        window.visualViewport.removeEventListener('scroll', handleResize);
+      } else {
+        window.removeEventListener('resize', handleResize);
+      }
+    };
+  }, [isMobile, isExpanded]);
 
   const toggleExpand = () => {
     setIsExpanded(!isExpanded);
@@ -214,7 +260,12 @@ export function AIBar({ onClose }: AIBarProps) {
   };
 
   return (
-    <div className={`fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 transition-all duration-300 ${isExpanded ? 'w-[600px] max-w-[90vw]' : 'w-auto'}`}>
+    <div 
+      className={`fixed left-1/2 transform -translate-x-1/2 z-50 transition-all duration-300 ${isExpanded ? 'w-[600px] max-w-[90vw]' : 'w-auto'}`}
+      style={{
+        bottom: isMobile && keyboardHeight > 0 ? `${keyboardHeight + 16}px` : '1.5rem' // 1.5rem = 6 in tailwind
+      }}
+    >
       {isExpanded ? (
         <div className="bg-card border shadow-lg rounded-full overflow-hidden flex items-center p-1 pl-6 ring-2 ring-primary/20 animate-in fade-in slide-in-from-bottom-4">
           <Input
@@ -259,7 +310,7 @@ export function AIBar({ onClose }: AIBarProps) {
         <Button
           onClick={toggleExpand}
           variant="outline"
-          className="rounded-full shadow-lg bg-card hover:bg-card/90 border-primary/20 hover:border-primary/30 flex items-center gap-2 px-4 py-2 ring-2 ring-primary/20 border-glow"
+          className="rounded-full shadow-lg bg-card hover:bg-card/90 border-primary/20 hover:border-primary/30 flex items-center gap-2 px-4 py-2 my-12 ring-2 ring-primary/20 border-glow"
         >
           <Sparkles className="h-4 w-4 text-primary" />
           <span>AI Assistant</span>

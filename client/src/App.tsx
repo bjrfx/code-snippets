@@ -17,8 +17,11 @@ import ChecklistDetail from '@/pages/ChecklistDetail';
 import TagDetail from '@/pages/TagDetail';
 import Projects from '@/pages/Projects';
 import Profile from '@/pages/Profile';
+import Search from '@/pages/Search';
 import AdminDashboard from '@/pages/AdminDashboard';
+import MobileAdminDashboard from '@/pages/MobileAdminDashboard';
 import UserDetail from '@/pages/UserDetail';
+import { useIsMobile } from './hooks/use-is-mobile';
 
 function PrivateRoute({ component: Component }: { component: React.ComponentType }) {
   const { user, isLoading } = useAuth();
@@ -87,7 +90,11 @@ function Router() {
       <Route path="/settings" component={() => <PrivateRoute component={Settings} />} />
       <Route path="/projects" component={() => <PrivateRoute component={Projects} />} />
       <Route path="/profile" component={() => <PrivateRoute component={Profile} />} />
-      <Route path="/admin" component={() => <AdminRoute component={AdminDashboard} />} />
+      <Route path="/search" component={() => <PrivateRoute component={Search} />} />
+      <Route path="/admin" component={() => {
+        const isMobile = useIsMobile();
+        return <AdminRoute component={isMobile ? MobileAdminDashboard : AdminDashboard} />;
+      }} />
       <Route path="/admin/users/:id" component={() => <AdminRoute component={UserDetail} />} />
       <Route path="/snippets/:id" component={() => <PrivateRoute component={SnippetDetail} />} />
       <Route path="/notes/:id" component={() => <PrivateRoute component={NoteDetail} />} />

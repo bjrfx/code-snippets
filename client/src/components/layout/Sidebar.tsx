@@ -250,7 +250,7 @@ export function Sidebar() {
   if (!user) return null;
 
   return (
-    <div className={`border-r ${isCollapsed ? 'w-16' : 'w-64'} transition-all duration-200`}>
+    <div className={`border-r ${isCollapsed ? 'w-16' : 'w-64'} transition-all duration-200 fixed top-0 bottom-0 left-0 z-30`}>
       <div className="flex h-full flex-col">
         <div className="p-4">
           <div className="flex items-center justify-between">
