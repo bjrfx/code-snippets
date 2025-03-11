@@ -6,9 +6,7 @@
       "outputLocation": "dist",
       "appBuildCommand": "npm run build",
       "run": "npm run dev",
-      "appDevserverUrl": "http://localhost:5173",
-      "appName": "code-snippets",
-      "resourceGroup": "code-snippets-rg"
+      "appDevserverUrl": "http://localhost:5173"
     }
   }
 }
