@@ -3,10 +3,12 @@
   "configurations": {
     "code-snippets": {
       "appLocation": ".",
-      "outputLocation": "dist",
+      "outputLocation": "dist/public",
       "appBuildCommand": "npm run build",
       "run": "npm run dev",
-      "appDevserverUrl": "http://localhost:5173"
+      "appDevserverUrl": "http://localhost:5173",
+      "appName": "code-snippets",
+      "resourceGroup": "code-snippets-rg"
     }
   }
 }

@@ -3,7 +3,69 @@ import express2 from "express";
 
 // server/routes.ts
 import { createServer } from "http";
+
+// server/storage.ts
+var MemStorage = class {
+  users;
+  currentId;
+  constructor() {
+    this.users = /* @__PURE__ */ new Map();
+    this.currentId = 1;
+  }
+  async getUser(id) {
+    return this.users.get(id);
+  }
+  async getUserByUsername(username) {
+    return Array.from(this.users.values()).find(
+      (user) => user.username === username
+    );
+  }
+  async createUser(insertUser) {
+    const id = this.currentId++;
+    const user = { ...insertUser, id };
+    this.users.set(id, user);
+    return user;
+  }
+};
+var storage = new MemStorage();
+
+// server/routes.ts
 async function registerRoutes(app2) {
+  app2.get("/api/users", async (req, res) => {
+    try {
+      res.json({ users: [] });
+    } catch (error) {
+      res.status(500).json({ message: error.message || "Failed to fetch users" });
+    }
+  });
+  app2.get("/api/users/:id", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      res.json(user);
+    } catch (error) {
+      res.status(500).json({ message: error.message || "Failed to fetch user" });
+    }
+  });
+  app2.post("/api/users", async (req, res) => {
+    try {
+      const { username, email } = req.body;
+      if (!username || !email) {
+        return res.status(400).json({ message: "Username and email are required" });
+      }
+      const existingUser = await storage.getUserByUsername(username);
+      if (existingUser) {
+        return res.status(409).json({ message: "Username already exists" });
+      }
+      const newUser = await storage.createUser({ username, email });
+      res.status(201).json(newUser);
+    } catch (error) {
+      res.status(500).json({ message: error.message || "Failed to create user" });
+    }
+  });
   const httpServer = createServer(app2);
   return httpServer;
 }
