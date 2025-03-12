@@ -22,7 +22,6 @@ import AdminDashboard from '@/pages/AdminDashboard';
 import MobileAdminDashboard from '@/pages/MobileAdminDashboard';
 import UserDetail from '@/pages/UserDetail';
 import { useIsMobile } from './hooks/use-is-mobile';
-import { ErrorBoundary } from 'react-error-boundary';
 
 function PrivateRoute({ component: Component }: { component: React.ComponentType }) {
   const { user, isLoading } = useAuth();
@@ -106,32 +105,16 @@ function Router() {
   );
 }
 
-function ErrorFallback({ error }: { error: Error }) {
-  return (
-    <div role="alert" className="p-4 text-destructive bg-destructive/10">
-      <h2 className="font-bold mb-2">Something went wrong</h2>
-      <pre className="whitespace-pre-wrap text-sm">{error.message}</pre>
-    </div>
-  );
-}
-
 function App() {
+  // Initialize theme and font size after QueryClient is available
+  useTheme();
+  useFontSize();
+
   return (
-    <ErrorBoundary
-      FallbackComponent={ErrorFallback}
-      onError={(error) => {
-        if (import.meta.env.DEV) {
-          window.__vite_plugin_runtime_error_overlay__?.displayRuntimeError(
-            error.toString()
-          );
-        }
-      }}
-    >
-      <>
-        <Router />
-        <Toaster />
-      </>
-    </ErrorBoundary>
+    <>
+      <Router />
+      <Toaster />
+    </>
   );
 }
 

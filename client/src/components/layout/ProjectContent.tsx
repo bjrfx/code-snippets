@@ -161,11 +161,6 @@ export function ProjectContent({ projectId, type, userId }: ProjectContentProps)
   // Log any errors
   if (error) {
     console.error(`Error in ProjectContent (${type}):`, error);
-    return (
-      <div className="pl-6 py-1 text-xs text-destructive">
-        Failed to load {type}. {error instanceof Error ? error.message : 'Please try again later'}
-      </div>
-    );
   }
 
   if (isLoading) {
