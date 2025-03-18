@@ -1,0 +1,28 @@
+# Code Snippets API & Software License
+
+## 1. License Overview
+This software and its associated source code are proprietary and not open-source. No one is permitted to use, copy, modify, distribute, or sublicense the code in any form. Users may, however, interact with the public API provided by the software under the conditions outlined below.
+
+## 2. Code Usage Restrictions
+- The source code cannot be copied, modified, distributed, or reverse-engineered.
+- The repository and all its files remain the exclusive property of the owner.
+- No part of the codebase may be used for commercial or personal projects without explicit written permission from the owner.
+
+## 3. API Usage
+- The public API of Code Snippets is available for use under the terms set by the owner.
+- API consumers must not attempt to decompile, scrape, or extract internal logic from API responses.
+- Any abuse, misuse, or excessive API usage may result in access restrictions or termination.
+
+## 4. No Warranty & Liability
+- This software is provided "as is" without any warranties, express or implied. 
+- The owner is not responsible for any damages, data loss, or issues arising from its use.
+- Users assume all risks associated with the use of the software.
+
+## 5. Contact & Permissions
+For permissions, inquiries, or special API access requests, contact: [kiran.bdotsoftware.com].
+
+## 6. Governing Law
+This license shall be governed by and construed in accordance with the laws of the jurisdiction in which the owner resides, without regard to its conflict of law principles.
+
+## 7. Amendments
+The owner reserves the right to amend the terms of this license at any time. Continued use of the software following any amendments constitutes acceptance of the new terms.
